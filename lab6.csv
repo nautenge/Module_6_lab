@@ -1,0 +1,290 @@
+using System;
+
+public enum LogLevel{
+    INFO, WARNING, ERROR
+}
+
+public class Logger{
+    private static Logger _instance;
+    private static readonly object _lock = new object();
+    private LogLevel _currentLogLevel = LogLevel.INFO;
+
+    private Logger() { }
+
+    public static Logger GetInstance(){
+        if (_instance == null){
+            lock (_lock){
+                if (_instance == null){
+                    _instance = new Logger();
+                }
+            }
+        }
+        return _instance;
+    }
+
+    public void SetLogLevel(LogLevel logLevel){
+        _currentLogLevel = logLevel;
+    }
+
+    public void Log(string message, LogLevel level){
+        if (level >= _currentLogLevel){
+            Console.WriteLine($"{DateTime.Now} [{level}] {message}");
+        }
+    }
+}
+
+public class LoggerTest{
+    public static void LogMessages(LogLevel logLevel){
+        Logger logger = Logger.GetInstance();
+        for (int i = 0; i < 5; i++){
+            logger.Log($"Сообщение {i} с уровнем {logLevel}", logLevel);
+        }
+    }
+}
+
+class Program{
+    static void Main(string[] args){
+        Logger logger = Logger.GetInstance();
+
+        logger.SetLogLevel(LogLevel.WARNING);
+
+        LoggerTest.LogMessages(LogLevel.INFO);
+        LoggerTest.LogMessages(LogLevel.WARNING);
+        LoggerTest.LogMessages(LogLevel.ERROR);
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+using System;
+
+public class Computer{
+    public string CPU { get; set; }
+    public string RAM { get; set; }
+    public string Storage { get; set; }
+    public string GPU { get; set; }
+    public string OS { get; set; }
+    public string CoolingSystem { get; set; }
+    public string PowerSupply { get; set; }
+
+    public override string ToString(){
+        return $"Компьютер: CPU - {CPU}, RAM - {RAM}, Накопитель - {Storage}, GPU - {GPU}, ОС - {OS}, Охлаждение - {CoolingSystem}, БП - {PowerSupply}";
+    }
+}
+
+public interface IComputerBuilder{
+    void SetCPU();
+    void SetRAM();
+    void SetStorage();
+    void SetGPU();
+    void SetOS();
+    void SetCoolingSystem();
+    void SetPowerSupply();
+    Computer GetComputer();
+}
+
+public class OfficeComputerBuilder : IComputerBuilder{
+    private Computer _computer = new Computer();
+
+    public void SetCPU() => _computer.CPU = "Intel i3";
+    public void SetRAM() => _computer.RAM = "8GB";
+    public void SetStorage() => _computer.Storage = "1TB HDD";
+    public void SetGPU() => _computer.GPU = "Integrated";
+    public void SetOS() => _computer.OS = "Windows 10";
+    public void SetCoolingSystem() => _computer.CoolingSystem = "Standard Air Cooling";
+    public void SetPowerSupply() => _computer.PowerSupply = "400W";
+
+    public Computer GetComputer() => _computer;
+}
+
+public class GamingComputerBuilder : IComputerBuilder{
+    private Computer _computer = new Computer();
+
+    public void SetCPU() => _computer.CPU = "Intel i9";
+    public void SetRAM() => _computer.RAM = "32GB";
+    public void SetStorage() => _computer.Storage = "1TB SSD";
+    public void SetGPU() => _computer.GPU = "NVIDIA RTX 3080";
+    public void SetOS() => _computer.OS = "Windows 11";
+    public void SetCoolingSystem() => _computer.CoolingSystem = "Water Cooling";
+    public void SetPowerSupply() => _computer.PowerSupply = "750W";
+
+    public Computer GetComputer() => _computer;
+}
+
+public class ServerComputerBuilder : IComputerBuilder{
+    private Computer _computer = new Computer();
+
+    public void SetCPU() => _computer.CPU = "Intel Xeon";
+    public void SetRAM() => _computer.RAM = "64GB ECC";
+    public void SetStorage() => _computer.Storage = "4TB SSD RAID";
+    public void SetGPU() => _computer.GPU = "None";
+    public void SetOS() => _computer.OS = "Linux Server";
+    public void SetCoolingSystem() => _computer.CoolingSystem = "Industrial Air Cooling";
+    public void SetPowerSupply() => _computer.PowerSupply = "1000W Redundant";
+
+    public Computer GetComputer() => _computer;
+}
+
+public class ComputerDirector{
+    private IComputerBuilder _builder;
+
+    public ComputerDirector(IComputerBuilder builder){
+        _builder = builder;
+    }
+
+    public void ConstructComputer(){
+        _builder.SetCPU();
+        _builder.SetRAM();
+        _builder.SetStorage();
+        _builder.SetGPU();
+        _builder.SetOS();
+        _builder.SetCoolingSystem();
+        _builder.SetPowerSupply();
+
+        if (_builder.GetComputer().GPU == "NVIDIA RTX 3080" && _builder.GetComputer().PowerSupply == "400W"){
+            throw new InvalidOperationException("Недостаточно мощности для видеокарты.");
+        }
+    }
+
+    public Computer GetComputer(){
+        return _builder.GetComputer();
+    }
+}
+
+class Program{
+    static void Main(string[] args){
+        try{
+            IComputerBuilder officeBuilder = new OfficeComputerBuilder();
+            ComputerDirector director = new ComputerDirector(officeBuilder);
+            director.ConstructComputer();
+            Computer officeComputer = director.GetComputer();
+            Console.WriteLine("Офисный компьютер:");
+            Console.WriteLine(officeComputer);
+            Console.WriteLine();
+
+            IComputerBuilder gamingBuilder = new GamingComputerBuilder();
+            director = new ComputerDirector(gamingBuilder);
+            director.ConstructComputer();
+            Computer gamingComputer = director.GetComputer();
+            Console.WriteLine("Игровой компьютер:");
+            Console.WriteLine(gamingComputer);
+            Console.WriteLine();
+
+            IComputerBuilder serverBuilder = new ServerComputerBuilder();
+            director = new ComputerDirector(serverBuilder);
+            director.ConstructComputer();
+            Computer serverComputer = director.GetComputer();
+            Console.WriteLine("Серверный компьютер:");
+            Console.WriteLine(serverComputer);
+        }
+        catch (Exception ex){
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+    }
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+using System;
+
+public interface IPrototype<T>{
+    T Clone();
+}
+
+public class Section : IPrototype<Section>{
+    public string Title { get; set; }
+    public string Text { get; set; }
+
+    public Section(string title, string text){
+        Title = title;
+        Text = text;
+    }
+
+    public Section Clone(){
+        return new Section(this.Title, this.Text);
+    }
+
+    public override string ToString(){
+        return $"Раздел: {Title}, Текст: {Text}";
+    }
+}
+
+public class Image : IPrototype<Image>{
+    public string URL { get; set; }
+
+    public Image(string url){
+        URL = url;
+    }
+
+    public Image Clone(){
+        return new Image(this.URL);
+    }
+
+    public override string ToString(){
+        return $"Изображение: {URL}";
+    }
+}
+
+public class Document : IPrototype<Document>{
+    public string Title { get; set; }
+    public string Content { get; set; }
+    
+    private Section section1;
+    private Section section2;
+    private Image image1;
+    private Image image2;
+
+    public Document(string title, string content){
+        Title = title;
+        Content = content;
+    }
+
+    public void AddSection(Section section, int index){
+        if (index == 1) section1 = section;
+        else if (index == 2) section2 = section;
+    }
+
+    public void AddImage(Image image, int index){
+        if (index == 1) image1 = image;
+        else if (index == 2) image2 = image;
+    }
+
+    public Document Clone(){
+        Document clonedDocument = new Document(this.Title, this.Content);
+
+        if (section1 != null) clonedDocument.AddSection(section1.Clone(), 1);
+        if (section2 != null) clonedDocument.AddSection(section2.Clone(), 2);
+
+        if (image1 != null) clonedDocument.AddImage(image1.Clone(), 1);
+        if (image2 != null) clonedDocument.AddImage(image2.Clone(), 2);
+
+        return clonedDocument;
+    }
+
+    public override string ToString(){
+        return $"Документ: {Title}\nСодержимое: {Content}\n" +
+               $"{section1}\n{section2}\n{image1}\n{image2}";
+    }
+}
+
+public class DocumentManager{
+    public Document CreateDocument(IPrototype<Document> prototype){
+        return prototype.Clone();
+    }
+}
+
+class Program{
+    static void Main(string[] args){
+        Document doc1 = new Document("Документ 1", "Содержимое документа 1");
+        doc1.AddSection(new Section("Раздел 1", "Текст раздела 1"), 1);
+        doc1.AddImage(new Image("http://example.com/image1.jpg"), 1);
+
+        DocumentManager manager = new DocumentManager();
+        Document doc2 = manager.CreateDocument(doc1);
+        doc2.Title = "Клон документа 1";
+        doc2.AddSection(new Section("Раздел 2", "Текст раздела 2"), 2);
+        doc2.AddImage(new Image("http://example.com/image2.jpg"), 2);
+
+        Console.WriteLine(doc1);
+        Console.WriteLine("\n---\n");
+        Console.WriteLine(doc2);
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
